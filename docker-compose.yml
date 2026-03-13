@@ -12,8 +12,25 @@ services:
       - "${HTTPS_PORT:-443}:443"
     volumes:
       - certs:/certs
+      - acme:/root/.acme.sh
     environment:
       - BACKEND_PORT=${BACKEND_PORT:-4000}
+      - DOMAIN=${DOMAIN:-}
+      - DNS_PROVIDER=${DNS_PROVIDER:-}
+      # DNS provider credentials — pass through all common provider env vars
+      - CF_Token=${CF_Token:-}
+      - CF_Account_ID=${CF_Account_ID:-}
+      - CF_Zone_ID=${CF_Zone_ID:-}
+      - CF_Key=${CF_Key:-}
+      - CF_Email=${CF_Email:-}
+      - DO_AUTH_TOKEN=${DO_AUTH_TOKEN:-}
+      - GANDI_LIVEDNS_KEY=${GANDI_LIVEDNS_KEY:-}
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID:-}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY:-}
+      - LINODE_V4_API_KEY=${LINODE_V4_API_KEY:-}
+      - DuckDNS_Token=${DuckDNS_Token:-}
+      - GD_Key=${GD_Key:-}
+      - GD_Secret=${GD_Secret:-}
     depends_on:
       - violetden-frontend
       - violetden-backend
@@ -51,3 +68,4 @@ services:
 volumes:
   certs:
   data:
+  acme:
