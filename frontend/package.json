@@ -2,7 +2,7 @@
   "name": "violetden",
   "private": true,
   "description": "VioletDen — a self-hosted smart home dashboard",
-  "version": "0.0.0",
+  "version": "0.2.0",
   "type": "module",
   "scripts": {
     "dev": "vite --host",
