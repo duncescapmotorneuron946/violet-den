@@ -21,7 +21,7 @@ A self-hosted smart home dashboard for organizing web services, devices, and net
 
 ## Screenshots
 
-> _Add screenshots here after deployment._
+![dashboard](a-1.jpg) ![ssh](b-1.jpg)
 
 ## Quick Start
 
