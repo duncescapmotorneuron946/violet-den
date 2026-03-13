@@ -261,13 +261,12 @@ function AddSectionForm({ onAdd, onCancel }) {
    APP — Main component with view/edit mode
    ══════════════════════════════════════════════════════════════ */
 /* Dashboard content — rendered inside AuthWrapper so auth token is always available */
-function Dashboard() {
+function Dashboard({ showSettings, setShowSettings }) {
   const [sections,        setSections]        = useState([]);
   const [loading,         setLoading]         = useState(true);
   const [saving,          setSaving]          = useState(false);
   const [editMode,        setEditMode]        = useState(false);
   const [addingSection,   setAddingSection]   = useState(false);
-  const [showSettings,    setShowSettings]    = useState(false);
   const [dragSectionIdx,  setDragSectionIdx]  = useState(null);
   const [dragOverSection, setDragOverSection] = useState(null);
 
@@ -402,7 +401,7 @@ function Dashboard() {
 
         <SSHPanel />
       </main>
-      {showSettings && <SettingsPanel onClose={() => setShowSettings(false)} />}
+      {/* SettingsPanel is now handled in App */}
     </div>
   );
 }
@@ -413,6 +412,8 @@ function Dashboard() {
 function App() {
   const [checking,      setChecking]      = useState(true);
   const [setupComplete, setSetupComplete] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
+  const [showSettings, setShowSettings] = useState(false);
 
   useEffect(() => {
     fetch('/api/setup-status')
@@ -442,7 +443,10 @@ function App() {
 
   return (
     <AuthWrapper>
-      <Dashboard />
+      <Dashboard key={refreshKey} showSettings={showSettings} setShowSettings={setShowSettings} />
+      {showSettings && (
+        <SettingsPanel onClose={() => { setShowSettings(false); setRefreshKey(k => k + 1); }} />
+      )}
     </AuthWrapper>
   );
 }

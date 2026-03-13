@@ -79,7 +79,15 @@ const requireAuth = (req, res, next) => {
 };
 
 // ── Health (public) ─────────────────────────────────────────────────────────
-app.get('/', (req, res) => res.json({ status: 'Backend running' }));
+const backendVersion = (() => {
+  try {
+    const pkg = JSON.parse(fs.readFileSync(path.join(__dirname, 'package.json'), 'utf8'));
+    return pkg.version || null;
+  } catch {
+    return null;
+  }
+})();
+app.get('/', (req, res) => res.json({ status: 'Backend running', version: backendVersion }));
 
 // ── Login (public, rate-limited) ─────────────────────────────────────────────
 app.post('/api/login', (req, res) => {
@@ -114,11 +122,7 @@ app.get('/api/validate-token', (req, res) => {
 // ── Setup status (public — check if first-time setup is needed) ──────────────
 app.get('/api/setup-status', (req, res) => {
   const hasCustomCreds = getConfig('admin_username', null) !== null;
-  const hasSections    = (() => {
-    try { return JSON.parse(getConfig('sections', '[]')).length > 0; }
-    catch { return false; }
-  })();
-  res.json({ setup_complete: hasCustomCreds && hasSections });
+  res.json({ setup_complete: hasCustomCreds });
 });
 
 // ── First-time setup (public — only works when no custom creds have been set) ─
