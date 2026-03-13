@@ -83,6 +83,26 @@ sudo ./uninstall.sh --purge      # Remove everything including data
 
 Works on Debian/Ubuntu, AlmaLinux/Rocky/RHEL, Fedora, and any systemd-based distro with Docker.
 
+### Updating
+
+Update to the latest release and rebuild:
+
+```bash
+cd /path/to/violet-den
+git fetch --tags
+git checkout $(git describe --tags --abbrev=0 origin/main)
+sudo systemctl restart violetden
+```
+
+The service automatically rebuilds all Docker images on restart — no manual build step needed.
+
+To follow a specific release instead of latest:
+
+```bash
+git checkout v1.2.0
+sudo systemctl restart violetden
+```
+
 ## Development (without Docker)
 
 ```bash
