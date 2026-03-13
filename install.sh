@@ -323,7 +323,10 @@ echo ""
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo "  VioletDen installed and running!"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo "  URL:     https://${HOST_IP}:${HTTPS_PORT}"
+HTTP_PORT_DISPLAY=$(grep -E '^HTTP_PORT=' "$ENV_FILE" 2>/dev/null | cut -d= -f2 | tr -d '[:space:]' || echo "80")
+[ -z "$HTTP_PORT_DISPLAY" ] && HTTP_PORT_DISPLAY="80"
+echo "  HTTPS:   https://${HOST_IP}:${HTTPS_PORT}"
+echo "  HTTP:    http://${HOST_IP}:${HTTP_PORT_DISPLAY}"
 if [ "$HA_FLAG" = true ]; then
   if [ -n "$HA_NETWORK" ]; then
     echo "  HA:      Connected to HA network ($HA_NETWORK)"
@@ -335,7 +338,8 @@ if [ "$HA_FLAG" = true ]; then
   echo "    1. HACS → Custom repositories → add repo as Integration"
   echo "    2. Download VioletDen → restart HA"
   echo "    3. Settings → Devices & Services → Add Integration → VioletDen"
-  echo "    4. Enter URL: https://${HOST_IP}:${HTTPS_PORT}"
+  echo "    4. Enter URL: http://${HOST_IP}:${HTTP_PORT_DISPLAY}"
+  echo "       (Use HTTP for HA — self-signed HTTPS breaks HA mobile app)"
 fi
 echo ""
 echo "  Config:  ${ENV_FILE}"
