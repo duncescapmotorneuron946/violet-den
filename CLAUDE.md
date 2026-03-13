@@ -200,7 +200,7 @@ sudo ./uninstall.sh        # Remove service (keeps data)
 sudo ./uninstall.sh --purge # Remove everything
 ```
 
-The installer always uses the full 3-container stack (`docker-compose.yml`). The `--ha` flag auto-detects the HA Docker container/network, generates `docker-compose.ha.network.yml` (override that attaches the backend to HA's network and injects `HA_INTEGRATION`/`HA_URL` env vars), sets `.env` values, and prints HACS install instructions. The service file uses `EnvironmentFile` to pass `.env` vars and runs `docker compose up/down` for start/stop.
+The installer always uses the full 3-container stack (`docker-compose.yml`). The `--ha` flag auto-detects the HA Docker container/network, generates `docker-compose.ha.network.yml` (override that attaches the backend to HA's network and injects `HA_INTEGRATION`/`HA_URL` env vars), sets `.env` values, and prints HACS install instructions. The systemd service runs `docker compose up/down` for start/stop — no `EnvironmentFile` needed since Docker Compose reads `.env` from the `WorkingDirectory` automatically.
 
 ## Common Tasks
 

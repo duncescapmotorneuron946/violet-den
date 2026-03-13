@@ -89,6 +89,13 @@ if [ ! -f "$ENV_FILE" ]; then
   fi
 fi
 
+# ── Fix .env permissions for systemd ──────────────────────────────────────────
+chmod 644 "$ENV_FILE"
+# Restore SELinux context if applicable (Rocky/Alma/RHEL)
+if command -v restorecon &>/dev/null; then
+  restorecon "$ENV_FILE" 2>/dev/null || true
+fi
+
 # ── Read port from .env for status display ───────────────────────────────────
 BACKEND_PORT=$(grep -E '^BACKEND_PORT=' "$ENV_FILE" 2>/dev/null | cut -d= -f2 | tr -d '[:space:]' || echo "4000")
 HTTPS_PORT=$(grep -E '^HTTPS_PORT=' "$ENV_FILE" 2>/dev/null | cut -d= -f2 | tr -d '[:space:]' || echo "443")
@@ -283,7 +290,7 @@ Wants=network-online.target
 [Service]
 Type=simple
 WorkingDirectory=${SCRIPT_DIR}
-EnvironmentFile=${ENV_FILE}
+# Note: no EnvironmentFile needed — docker compose reads .env from WorkingDirectory
 
 ExecStartPre=/usr/bin/docker compose ${COMPOSE_ARGS} down --remove-orphans
 ExecStart=/usr/bin/docker compose ${COMPOSE_ARGS} up --remove-orphans

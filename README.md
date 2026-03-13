@@ -263,21 +263,21 @@ VioletDen can be embedded as a sidebar panel in Home Assistant, providing the fu
 
 ### Quick Start (HACS)
 
-1. Run VioletDen: `docker compose -f docker-compose.ha.yml up --build -d`
+1. Run VioletDen: `sudo ./install.sh --ha` (or `docker compose up --build -d` with `HA_INTEGRATION=true` and `HA_URL` in `.env`)
 2. In HA, open **HACS → Custom repositories** → add `https://github.com/askrejans/violet-den` as **Integration**
 3. Download **VioletDen** from HACS, restart HA
 4. Go to **Settings → Devices & Services → Add Integration → VioletDen**
-5. Enter VioletDen URL (e.g., `http://192.168.1.100:4000`) — panel appears in sidebar
+5. Enter VioletDen URL (e.g., `https://192.168.1.100:443`) — panel appears in sidebar
 
 ### Quick Start (Manual)
 
 ```bash
 # 1. Configure
 cp .env.example .env
-# Set HA_URL=http://<ha-host>:8123
+# Set HA_INTEGRATION=true and HA_URL=http://<ha-host>:8123
 
-# 2. Build and run VioletDen
-docker compose -f docker-compose.ha.yml up --build -d
+# 2. Install as service with HA auto-detection
+sudo ./install.sh --ha
 
 # 3. Copy integration to HA config
 cp -r custom_components/violetden <ha-config>/custom_components/

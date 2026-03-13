@@ -9,18 +9,31 @@ beforeEach(() => {
 });
 
 describe('App HA integration', () => {
-  it('detects HA mode from setup-status response', async () => {
-    global.fetch = jest.fn(() =>
-      Promise.resolve({
-        json: () => Promise.resolve({ setup_complete: true, ha_mode: true }),
-      })
-    );
+  it('detects HA mode and falls through to login when not in iframe', async () => {
+    global.fetch = jest.fn((url) => {
+      if (url === '/api/setup-status') {
+        return Promise.resolve({
+          json: () => Promise.resolve({ setup_complete: true, ha_mode: true }),
+        });
+      }
+      // validate-token called by AuthWrapper
+      if (url === '/api/validate-token') {
+        return Promise.resolve({
+          ok: false,
+          json: () => Promise.resolve({ valid: false }),
+        });
+      }
+      return Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve({}),
+      });
+    });
 
     render(<App />);
 
-    // Should show loading while waiting for HA auth (no login screen)
+    // When not in iframe (window.parent === window), should fall through to login
     await waitFor(() => {
-      expect(screen.getByAltText('')).toBeInTheDocument();
+      expect(screen.getByText('Sign In')).toBeInTheDocument();
     });
   });
 

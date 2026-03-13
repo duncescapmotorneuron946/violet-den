@@ -476,8 +476,9 @@ function App() {
     );
   }
 
-  // In HA mode without auth yet — show loading (waiting for postMessage)
-  if (isHaMode() && !getToken()) {
+  // In HA mode inside iframe without auth yet — show loading (waiting for postMessage)
+  // If accessed directly (not in iframe), fall through to normal onboarding/login flow
+  if (isHaMode() && !getToken() && window.parent !== window) {
     return (
       <div className="auth-screen">
         <div className="app-logo-wrap" style={{ margin: '0 auto' }}>
