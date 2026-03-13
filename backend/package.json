@@ -1,0 +1,12 @@
+{
+  "name": "violetden-backend",
+  "description": "VioletDen Backend — API for self-hosted smart home dashboard",
+  "dependencies": {
+    "better-sqlite3": "^12.6.2",
+    "cors": "^2.8.6",
+    "dotenv": "^17.3.1",
+    "express": "^5.2.1",
+    "ssh2": "^1.17.0",
+    "ws": "^8.19.0"
+  }
+}

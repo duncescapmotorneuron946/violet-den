@@ -1,0 +1,12 @@
+node_modules/
+dist/
+data/
+certs/
+.env
+*.pem
+*.db
+*.db-wal
+*.db-shm
+.violetden_secret
+.DS_Store
+.claude
