@@ -2275,13 +2275,15 @@ h1 {
 .xterm-terminal {
   height: 420px;
   min-height: 200px;
-  padding: 8px 8px 16px;
+  padding: 8px;
+  padding-bottom: 0;
   background: #06061a;
   overflow: hidden;
   position: relative;
+  box-sizing: border-box;
 }
 .xterm-terminal .xterm {
-  height: 100%;
+  height: calc(100% - 8px);
 }
 .xterm-terminal .xterm-viewport {
   background: #06061a !important;
