@@ -551,7 +551,10 @@ wss.on('connection', (ws, req) => {
     }
 
     if (msg.type === 'resize' && session?.getStream()) {
-      session.getStream().setWindow(msg.rows, msg.cols, 0, 0);
+      const stream = session.getStream();
+      if (typeof stream.setWindow === 'function') {
+        stream.setWindow(msg.rows, msg.cols, 0, 0);
+      }
     }
 
     if (msg.type === 'disconnect' && session) {
@@ -619,7 +622,7 @@ app.post('/api/terminal/:id/input', requireAuth, (req, res) => {
   const { type, data, cols, rows } = req.body;
 
   if (type === 'input' && sess.getStream()) sess.getStream().write(data);
-  if (type === 'resize' && sess.getStream()) sess.getStream().setWindow(rows, cols, 0, 0);
+  if (type === 'resize' && sess.getStream() && typeof sess.getStream().setWindow === 'function') sess.getStream().setWindow(rows, cols, 0, 0);
   if (type === 'disconnect') {
     try { sess.conn.end(); } catch {}
     pollingSessions.delete(req.params.id);
