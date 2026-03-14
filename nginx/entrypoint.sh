@@ -3,19 +3,24 @@ set -e
 
 mkdir -p /certs
 
+# acme.sh binary lives in /opt/acme.sh (survives volume mounts)
+# cert/account state lives in /acme-data (Docker volume)
+ACME_BIN="/opt/acme.sh/acme.sh"
+ACME_DATA="/acme-data"
+mkdir -p "$ACME_DATA"
+
 # ── Let's Encrypt via DNS-01 (if DOMAIN and DNS provider are configured) ────
 if [ -n "$DOMAIN" ] && [ -n "$DNS_PROVIDER" ]; then
-  ACME_HOME="/root/.acme.sh"
-  CERT_DOMAIN_DIR="$ACME_HOME/${DOMAIN}_ecc"
+  CERT_DOMAIN_DIR="$ACME_DATA/${DOMAIN}_ecc"
 
   # Ensure acme.sh uses Let's Encrypt (not ZeroSSL) and has a clean account
-  acme.sh --set-default-ca --server letsencrypt 2>/dev/null || true
+  $ACME_BIN --set-default-ca --server letsencrypt --config-home "$ACME_DATA" 2>/dev/null || true
   # Remove any stale account with invalid email
-  if [ -f "$ACME_HOME/account.conf" ]; then
-    sed -i '/ACCOUNT_EMAIL/d' "$ACME_HOME/account.conf" 2>/dev/null || true
+  if [ -f "$ACME_DATA/account.conf" ]; then
+    sed -i '/ACCOUNT_EMAIL/d' "$ACME_DATA/account.conf" 2>/dev/null || true
   fi
   # Remove stale CA account data so fresh registration happens
-  rm -rf "$ACME_HOME/ca" 2>/dev/null || true
+  rm -rf "$ACME_DATA/ca" 2>/dev/null || true
 
   # Check if cert already exists and is still valid (>30 days remaining)
   NEED_CERT=true
@@ -36,7 +41,7 @@ if [ -n "$DOMAIN" ] && [ -n "$DNS_PROVIDER" ]; then
     if [ "$DNS_PROVIDER" = "dns_gd" ]; then
       DNSSLEEP="--dnssleep 600"
     fi
-    if acme.sh --issue --dns "$DNS_PROVIDER" -d "$DOMAIN" --keylength ec-256 --server letsencrypt $DNSSLEEP --force 2>&1; then
+    if $ACME_BIN --issue --dns "$DNS_PROVIDER" -d "$DOMAIN" --keylength ec-256 --server letsencrypt --config-home "$ACME_DATA" $DNSSLEEP --force 2>&1; then
       echo "[nginx] Let's Encrypt cert issued successfully for $DOMAIN"
     else
       echo "[nginx] WARNING: Let's Encrypt cert request failed — falling back to self-signed"
@@ -51,7 +56,7 @@ if [ -n "$DOMAIN" ] && [ -n "$DNS_PROVIDER" ]; then
     echo "[nginx] Let's Encrypt cert installed to /certs/"
 
     # Set up daily renewal check via crond
-    echo "0 3 * * * acme.sh --renew -d $DOMAIN --ecc && cp $CERT_DOMAIN_DIR/fullchain.cer /certs/cert.pem && cp $CERT_DOMAIN_DIR/${DOMAIN}.key /certs/key.pem && nginx -s reload 2>/dev/null" \
+    echo "0 3 * * * $ACME_BIN --renew -d $DOMAIN --ecc --config-home $ACME_DATA && cp $CERT_DOMAIN_DIR/fullchain.cer /certs/cert.pem && cp $CERT_DOMAIN_DIR/${DOMAIN}.key /certs/key.pem && nginx -s reload 2>/dev/null" \
       | crontab -
     crond -b -l 8
     echo "[nginx] Auto-renewal cron enabled (daily at 03:00)"
