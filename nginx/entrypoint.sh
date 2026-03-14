@@ -8,6 +8,15 @@ if [ -n "$DOMAIN" ] && [ -n "$DNS_PROVIDER" ]; then
   ACME_HOME="/root/.acme.sh"
   CERT_DOMAIN_DIR="$ACME_HOME/${DOMAIN}_ecc"
 
+  # Ensure acme.sh uses Let's Encrypt (not ZeroSSL) and has a clean account
+  acme.sh --set-default-ca --server letsencrypt 2>/dev/null || true
+  # Remove any stale account with invalid email
+  if [ -f "$ACME_HOME/account.conf" ]; then
+    sed -i '/ACCOUNT_EMAIL/d' "$ACME_HOME/account.conf" 2>/dev/null || true
+  fi
+  # Remove stale CA account data so fresh registration happens
+  rm -rf "$ACME_HOME/ca" 2>/dev/null || true
+
   # Check if cert already exists and is still valid (>30 days remaining)
   NEED_CERT=true
   if [ -f "$CERT_DOMAIN_DIR/fullchain.cer" ] && [ -f "$CERT_DOMAIN_DIR/${DOMAIN}.key" ]; then
